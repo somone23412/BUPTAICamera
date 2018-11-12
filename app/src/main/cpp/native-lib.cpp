@@ -186,7 +186,6 @@ Java_facebook_f8demo_ClassifyCamera_classificationFromCaffe2(
             max_position = j;
         }
     }
-    stringStream <<"max_position: " << max_position << "\n";
-
+    stringStream <<"max_position: " << max_position;
     return env->NewStringUTF(stringStream.str().c_str());
 }

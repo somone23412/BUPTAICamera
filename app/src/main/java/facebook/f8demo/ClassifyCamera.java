@@ -5,8 +5,12 @@ import android.app.ActionBar;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.ImageFormat;
-import android.graphics.PixelFormat;
+import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -21,6 +25,7 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
@@ -40,9 +45,13 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -206,7 +215,7 @@ public class ClassifyCamera extends AppCompatActivity {
 
     protected void createCameraPreview() {
         try {
-            SurfaceTexture texture = textureView.getSurfaceTexture();
+            final SurfaceTexture texture = textureView.getSurfaceTexture();
             assert texture != null;
             texture.setDefaultBufferSize(imageDimension.getWidth(), imageDimension.getHeight());
             Surface surface = new Surface(texture);
@@ -241,10 +250,43 @@ public class ClassifyCamera extends AppCompatActivity {
 
                             predictedClass = classificationFromCaffe2(h, w, Y, U, V,
                                     rowStride, pixelStride, run_HWC);
+
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    tv.setText(predictedClass);
+                                    String splitStr[] = predictedClass.split(" ");
+                                    String classname = splitStr.length - 1 > 0 ? splitStr[splitStr.length - 1] : splitStr[0];
+                                    tv.setText(predictedClass+"\n"+classname);
+                                    Bitmap bitmap = textureView.getBitmap();
+                                    if (bitmap != null) {
+                                        try {
+                                            SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy-MM-dd_hh:mm:ss");
+                                            String date = sDateFormat.format(new java.util.Date());
+                                            //获取内置SD卡路径
+                                            String sdCardPath = Environment.getExternalStorageDirectory().getPath();
+                                            //新建一个File，传入文件夹目录
+                                            File dirfile = new File(sdCardPath + File.separator
+                                                    + "AIPhoto" + File.separator
+                                                    + classname
+                                            );
+                                            //判断文件夹是否存在，如果不存在就创建，否则不创建
+                                            if (!dirfile.exists()) {
+                                                //通过file的mkdirs()方法创建目录中包含却不存在的文件夹
+                                                dirfile.mkdirs();
+                                            }
+                                            // 图片文件路径
+                                            String filePath = sdCardPath + File.separator
+                                                    + "AIPhoto" + File.separator
+                                                    + classname + File.separator
+                                                    + date + ".png";
+                                            File file = new File(filePath);
+                                            FileOutputStream os = new FileOutputStream(file);
+                                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, os);
+                                            os.flush();
+                                            os.close();
+                                        } catch (Exception e) {
+                                        }
+                                    }
                                     processing = false;
                                     catch_now = false;
                                 }
@@ -294,6 +336,20 @@ public class ClassifyCamera extends AppCompatActivity {
                 return;
             }
             manager.openCamera(cameraId, stateCallback, null);
+            //检查权限（NEED_PERMISSION）是否被授权 PackageManager.PERMISSION_GRANTED表示同意授权
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                //用户已经拒绝过一次，再次弹出权限申请对话框需要给用户一个解释
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission
+                        .WRITE_EXTERNAL_STORAGE)) {
+                    Toast.makeText(this, "请开通相关权限，否则无法正常使用本应用！", Toast.LENGTH_SHORT).show();
+                }
+                //申请权限
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+
+            } else {
+                Toast.makeText(this, "授权成功！", Toast.LENGTH_SHORT).show();
+            }
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
