@@ -16,6 +16,7 @@
 #define IMG_H 227
 #define IMG_W 227
 #define IMG_C 3
+#define TRANS_SIZE 10
 #define MAX_DATA_SIZE IMG_H * IMG_W * IMG_C
 #define alog(...) __android_log_print(ANDROID_LOG_ERROR, "F8DEMO", __VA_ARGS__);
 
@@ -47,8 +48,8 @@ Java_facebook_f8demo_ClassifyCamera_initCaffe2(
         jobject assetManager) {
     AAssetManager *mgr = AAssetManager_fromJava(env, assetManager);
     alog("Attempting to load protobuf netdefs...");
-    loadToNetDef(mgr, &_initNet,   "squeeze_init_net.pb");
-    loadToNetDef(mgr, &_predictNet,"squeeze_predict_net.pb");
+    loadToNetDef(mgr, &_initNet,   "googlenet_init_net.pb");
+    loadToNetDef(mgr, &_predictNet,"googlenet_predict_net.pb");
     alog("done.");
     alog("Instantiating predictor...");
     _predictor = new caffe2::Predictor(_initNet, _predictNet);
@@ -172,8 +173,20 @@ Java_facebook_f8demo_ClassifyCamera_classificationFromCaffe2(
     std::ostringstream stringStream;
     stringStream << avg_fps << " FPS\n";
 
+    //knn
+    int trans_class_votes[TRANS_SIZE] = {0};
     for (auto j = 0; j < k; ++j) {
+        trans_class_votes[trans[max_index[j]]]++;
         stringStream << j << ": " << imagenet_classes[max_index[j]] << " - " << max[j] / 10 << "%\n";
     }
+    int max_position = 0;
+    //find class which has max number of votes
+    for (auto j = 1; j < TRANS_SIZE; ++j) {
+        if (trans_class_votes[j] > trans_class_votes[max_position]){
+            max_position = j;
+        }
+    }
+    stringStream <<"max_position: " << max_position << "\n";
+
     return env->NewStringUTF(stringStream.str().c_str());
 }

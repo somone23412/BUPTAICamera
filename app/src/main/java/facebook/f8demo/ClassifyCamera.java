@@ -36,6 +36,7 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -62,6 +63,8 @@ public class ClassifyCamera extends AppCompatActivity {
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
     private TextView tv;
+    private Button catchButton;
+    private boolean catch_now = false;
     private String predictedClass = "none";
     private AssetManager mgr;
     private boolean processing = false;
@@ -141,6 +144,14 @@ public class ClassifyCamera extends AppCompatActivity {
         textureView.setSurfaceTextureListener(textureListener);
         tv = (TextView) findViewById(R.id.sample_text);
 
+        catchButton = (Button) findViewById(R.id.button);
+        catchButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                catch_now = true;
+            }
+        });
+
     }
 
     TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
@@ -206,37 +217,39 @@ public class ClassifyCamera extends AppCompatActivity {
                 @Override
                 public void onImageAvailable(ImageReader reader) {
                     try {
-
                         image = reader.acquireNextImage();
                         if (processing) {
                             image.close();
                             return;
                         }
-                        processing = true;
-                        int w = image.getWidth();
-                        int h = image.getHeight();
-                        ByteBuffer Ybuffer = image.getPlanes()[0].getBuffer();
-                        ByteBuffer Ubuffer = image.getPlanes()[1].getBuffer();
-                        ByteBuffer Vbuffer = image.getPlanes()[2].getBuffer();
-                        // TODO: use these for proper image processing on different formats.
-                        int rowStride = image.getPlanes()[1].getRowStride();
-                        int pixelStride = image.getPlanes()[1].getPixelStride();
-                        byte[] Y = new byte[Ybuffer.capacity()];
-                        byte[] U = new byte[Ubuffer.capacity()];
-                        byte[] V = new byte[Vbuffer.capacity()];
-                        Ybuffer.get(Y);
-                        Ubuffer.get(U);
-                        Vbuffer.get(V);
+                        if(catch_now) {
+                            processing = true;
+                            int w = image.getWidth();
+                            int h = image.getHeight();
+                            ByteBuffer Ybuffer = image.getPlanes()[0].getBuffer();
+                            ByteBuffer Ubuffer = image.getPlanes()[1].getBuffer();
+                            ByteBuffer Vbuffer = image.getPlanes()[2].getBuffer();
+                            // TODO: use these for proper image processing on different formats.
+                            int rowStride = image.getPlanes()[1].getRowStride();
+                            int pixelStride = image.getPlanes()[1].getPixelStride();
+                            byte[] Y = new byte[Ybuffer.capacity()];
+                            byte[] U = new byte[Ubuffer.capacity()];
+                            byte[] V = new byte[Vbuffer.capacity()];
+                            Ybuffer.get(Y);
+                            Ubuffer.get(U);
+                            Vbuffer.get(V);
 
-                        predictedClass = classificationFromCaffe2(h, w, Y, U, V,
-                                rowStride, pixelStride, run_HWC);
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                tv.setText(predictedClass);
-                                processing = false;
-                            }
-                        });
+                            predictedClass = classificationFromCaffe2(h, w, Y, U, V,
+                                    rowStride, pixelStride, run_HWC);
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    tv.setText(predictedClass);
+                                    processing = false;
+                                    catch_now = false;
+                                }
+                            });
+                        }
 
                     } finally {
                         if (image != null) {
