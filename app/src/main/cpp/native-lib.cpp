@@ -171,13 +171,12 @@ Java_facebook_f8demo_ClassifyCamera_classificationFromCaffe2(
         }
     }
     std::ostringstream stringStream;
-    stringStream << avg_fps << " FPS\n";
+    //stringStream << avg_fps << " FPS\n";
 
     //knn
     int trans_class_votes[TRANS_SIZE] = {0};
     for (auto j = 0; j < k; ++j) {
         trans_class_votes[trans[max_index[j]]]++;
-        stringStream << j << ": " << imagenet_classes[max_index[j]] << " - " << max[j] / 10 << "%\n";
     }
     int max_position = 0;
     //find class which has max number of votes
@@ -186,6 +185,11 @@ Java_facebook_f8demo_ClassifyCamera_classificationFromCaffe2(
             max_position = j;
         }
     }
-    stringStream <<"max_position: " << max_position;
+    stringStream <<"max_position: " << max_position << " \n";
+
+    for (auto j = 0; j < k; ++j) {
+        stringStream << j << ": " << imagenet_classes_chinese[max_index[j]] << " - " << max[j] / 10 << "%\n";
+    }
+
     return env->NewStringUTF(stringStream.str().c_str());
 }

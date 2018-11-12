@@ -254,13 +254,12 @@ public class ClassifyCamera extends AppCompatActivity {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    String splitStr[] = predictedClass.split(" ");
-                                    String classname = splitStr.length - 1 > 0 ? splitStr[splitStr.length - 1] : splitStr[0];
+                                    String classname = predictedClass.split(" ")[1];
                                     tv.setText(predictedClass+"\n"+classname);
                                     Bitmap bitmap = textureView.getBitmap();
                                     if (bitmap != null) {
                                         try {
-                                            SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy-MM-dd_hh:mm:ss");
+                                            SimpleDateFormat sDateFormat = new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss");
                                             String date = sDateFormat.format(new java.util.Date());
                                             //获取内置SD卡路径
                                             String sdCardPath = Environment.getExternalStorageDirectory().getPath();
@@ -278,7 +277,9 @@ public class ClassifyCamera extends AppCompatActivity {
                                             String filePath = sdCardPath + File.separator
                                                     + "AIPhoto" + File.separator
                                                     + classname + File.separator
-                                                    + date + ".png";
+                                                    + date +"_"
+                                                    + predictedClass.split("\n")[1].split(" ")[1].split(",")[0]
+                                                    + ".png";
                                             File file = new File(filePath);
                                             FileOutputStream os = new FileOutputStream(file);
                                             bitmap.compress(Bitmap.CompressFormat.PNG, 100, os);
