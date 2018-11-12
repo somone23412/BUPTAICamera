@@ -3011,3 +3011,6 @@ const char * imagenet_classes_chinese[] = {
 "穗, 长钉, 头状花序",
 "卫生纸"
 };
+const char * transName{
+    
+};
