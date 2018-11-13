@@ -255,7 +255,7 @@ public class ClassifyCamera extends AppCompatActivity {
                                 @Override
                                 public void run() {
                                     String classname = predictedClass.split(" ")[1];
-                                    tv.setText(predictedClass+"\n"+classname);
+                                    tv.setText(predictedClass);
                                     Bitmap bitmap = textureView.getBitmap();
                                     if (bitmap != null) {
                                         try {
@@ -265,6 +265,7 @@ public class ClassifyCamera extends AppCompatActivity {
                                             String sdCardPath = Environment.getExternalStorageDirectory().getPath();
                                             //新建一个File，传入文件夹目录
                                             File dirfile = new File(sdCardPath + File.separator
+                                                    + "DCIM" + File.separator
                                                     + "AIPhoto" + File.separator
                                                     + classname
                                             );
@@ -275,6 +276,7 @@ public class ClassifyCamera extends AppCompatActivity {
                                             }
                                             // 图片文件路径
                                             String filePath = sdCardPath + File.separator
+                                                    + "DCIM" + File.separator
                                                     + "AIPhoto" + File.separator
                                                     + classname + File.separator
                                                     + date +"_"

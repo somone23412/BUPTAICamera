@@ -16,7 +16,7 @@
 #define IMG_H 227
 #define IMG_W 227
 #define IMG_C 3
-#define TRANS_SIZE 10
+#define TRANS_SIZE 6
 #define MAX_DATA_SIZE IMG_H * IMG_W * IMG_C
 #define alog(...) __android_log_print(ANDROID_LOG_ERROR, "F8DEMO", __VA_ARGS__);
 
@@ -176,7 +176,7 @@ Java_facebook_f8demo_ClassifyCamera_classificationFromCaffe2(
     //knn
     int trans_class_votes[TRANS_SIZE] = {0};
     for (auto j = 0; j < k; ++j) {
-        trans_class_votes[trans[max_index[j]]]++;
+        if (max[j] > 0.1 ) trans_class_votes[trans[max_index[j]]]++;
     }
     int max_position = 0;
     //find class which has max number of votes
@@ -185,10 +185,11 @@ Java_facebook_f8demo_ClassifyCamera_classificationFromCaffe2(
             max_position = j;
         }
     }
-    stringStream <<"max_position: " << max_position << " \n";
+    stringStream <<"分类: " << transName[max_position] << " \n";
 
     for (auto j = 0; j < k; ++j) {
-        stringStream << j << ": " << imagenet_classes_chinese[max_index[j]] << " - " << max[j] / 10 << "%\n";
+        stringStream << j << ": " << imagenet_classes_chinese[max_index[j]] << " - " << max[j] / 10 << "%";
+        if (j < k - 1) stringStream << "\n";
     }
 
     return env->NewStringUTF(stringStream.str().c_str());
